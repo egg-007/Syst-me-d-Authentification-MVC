@@ -19,11 +19,44 @@ class UserRepository extends User{
         return $results;
     }
     public function insertUser($data){
+
+        $passwordHash = password_hash($data['password'], PASSWORD_BCRYPT);
+        $data['password'] = $passwordHash;
         $query = "INSERT INTO users (role_id, fullname, email, password, created_at) 
                   VALUES (:role_id, :fullname, :email, :password, :created_at)";
         $stmt = $this->db->prepare($query);
         $stmt->execute($data);
-        //return last id
         return (int) $this->db->lastInsertId();
     }
+
+    public function getByEmail($email): ?User{
+        $qry = "SELECT * FROM users WHERE email = :email";
+        $stmt = $this->db->prepare($qry);
+        $stmt->execute(['email' => $email]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        if($result){
+            $user = new User($result['fullname'], $result['email'], $result['password'], $result['role_id']);
+            $user->setId($result['id']);
+            $user->setCreated_at($result['created_at']);
+            $user->setupdated_at($result['updated_at']);
+            return $user;
+        }
+        return null;
+    }
+
+    public function getById($id): ?User{
+        $qry = "SELECT * FROM users WHERE id = :id";
+        $stmt = $this->db->prepare($qry);
+        $stmt->execute(['id' => $id]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        if($result){
+            $user = new User($result['fullname'], $result['email'], $result['password'], $result['role_id']);
+            $user->setId($result['id']);
+            $user->setCreated_at($result['created_at']);
+            $user->setupdated_at($result['updated_at']);
+            return $user;
+        }
+        return null;
+    }
+
 }
